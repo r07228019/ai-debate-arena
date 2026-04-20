@@ -1,0 +1,73 @@
+name: Daily Debate
+
+on:
+  schedule:
+    # 台灣時間每日 07:20（= UTC 前一天 23:20）
+    - cron: '20 23 * * *'
+  workflow_dispatch:  # 允許手動觸發
+
+permissions:
+  contents: write  # 允許 commit 回 repo
+
+jobs:
+  debate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily debate
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MFA_SERIAL: ${{ secrets.AWS_MFA_SERIAL }}
+          AWS_MFA_SEED: ${{ secrets.AWS_MFA_SEED }}
+          TZ: Asia/Taipei
+        run: python -m src.main
+
+      - name: Commit & push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: daily debate $(date -u +'%Y-%m-%d')"
+            git push
+          fi
+
+  pages:
+    needs: debate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

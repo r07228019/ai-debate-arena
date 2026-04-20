@@ -1,0 +1,41 @@
+# AWS Bedrock 設定
+aws:
+  default_profile: cathay-dt-lab
+  default_region: us-east-1
+  bedrock_model: us.anthropic.claude-opus-4-7
+
+# Claude API 參數
+claude:
+  max_tokens: 4000          # 單輪發言上限
+  topic_picker_max_tokens: 2000
+  judge_max_tokens: 3000
+
+# PTT 爬蟲設定
+ptt:
+  boards:
+    - Gossiping
+    - HatePolitics
+  top_n_per_board: 20       # 每板取推文數最高的前 N 篇
+  min_push_count: 30        # 至少要有這麼多推才納入候選
+
+# 辯論格式
+debate:
+  persona_count: 3          # 每日隨機抽幾個人格
+  rounds: 2                 # 每人輪流發言幾回合
+  system_prompt_dir: prompts  # 相對於本檔案的路徑
+
+# 輸出設定
+output:
+  data_dir: data/debates    # JSON 原始紀錄（相對於本檔案所在目錄）
+  docs_dir: docs            # 靜態網頁（相對於本檔案所在目錄）
+  keep_n: 30                # 首頁保留最近 N 份
+
+# giscus 留言設定（建立 repo 後去 https://giscus.app 申請填入）
+giscus:
+  enabled: false
+  repo: ""                  # e.g. "davidliao/ai-debate-arena"
+  repo_id: ""
+  category: "General"
+  category_id: ""
+  mapping: "pathname"
+  theme: "dark_dimmed"
