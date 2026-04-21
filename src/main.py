@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import signal
 import sys
 import time
@@ -82,7 +83,9 @@ def main() -> int:
 
         default_region = config["aws"]["default_region"]
         bedrock_model = config["aws"]["bedrock_model"]
-        profile = args.profile or config["aws"].get("default_profile")
+        profile = args.profile or (
+            None if os.getenv("AWS_ACCESS_KEY_ID") else config["aws"].get("default_profile")
+        )
         if profile:
             print(f"[*] 使用 AWS profile: {profile}")
         aws_region = setup_aws_session(profile, args.region, default_region)
