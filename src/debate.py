@@ -6,28 +6,10 @@ from pathlib import Path
 
 import anthropic
 
+from .claude_client import call_with_retry
 from .personas import Persona
 
 logger = logging.getLogger(__name__)
-
-
-def _call_claude(
-    client: anthropic.AnthropicBedrock,
-    model: str,
-    max_tokens: int,
-    system: str,
-    user: str,
-) -> tuple[str, int, int]:
-    """呼叫 Claude 一次，回傳 (文字, input_tokens, output_tokens)。"""
-    with client.messages.stream(
-        model=model,
-        max_tokens=max_tokens,
-        system=system,
-        messages=[{"role": "user", "content": user}],
-    ) as stream:
-        final = stream.get_final_message()
-    text = "".join(b.text for b in final.content if b.type == "text").strip()
-    return text, final.usage.input_tokens, final.usage.output_tokens
 
 
 def _build_debater_user_prompt(
@@ -80,8 +62,9 @@ def run_debate(
         for persona in personas:
             print(f"      第 {r} 輪 · {persona.emoji} {persona.name} 發言 ...")
             user = _build_debater_user_prompt(topic, persona, r, history)
-            text, t_in, t_out = _call_claude(
-                client, bedrock_model, max_tokens, debater_system, user,
+            text, t_in, t_out = call_with_retry(
+                client, model=bedrock_model, max_tokens=max_tokens,
+                system=debater_system, user=user,
             )
             total_in += t_in
             total_out += t_out
@@ -104,8 +87,9 @@ def run_debate(
         f"## 背景說明\n{topic.get('topic_description', '')}\n\n"
         f"## 辯論紀錄\n{debate_transcript}"
     )
-    judge_text, t_in, t_out = _call_claude(
-        client, bedrock_model, judge_max_tokens, judge_system, judge_user,
+    judge_text, t_in, t_out = call_with_retry(
+        client, model=bedrock_model, max_tokens=judge_max_tokens,
+        system=judge_system, user=judge_user,
     )
     total_in += t_in
     total_out += t_out

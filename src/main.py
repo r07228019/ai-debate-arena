@@ -106,6 +106,7 @@ def main() -> int:
                 boards=config["ptt"]["boards"],
                 top_n_per_board=config["ptt"]["top_n_per_board"],
                 min_push_count=config["ptt"]["min_push_count"],
+                pages_per_board=config["ptt"].get("pages_per_board", 3),
             )
             if not candidates:
                 print("      無符合條件的候選文章，今日跳過")

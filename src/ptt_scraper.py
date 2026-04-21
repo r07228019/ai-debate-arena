@@ -53,10 +53,19 @@ def _parse_push_count(mark: str) -> int:
     return 0
 
 
-def _fetch_page(url: str) -> str:
-    resp = requests.get(url, cookies=PTT_COOKIES, headers=PTT_HEADERS, timeout=15)
-    resp.raise_for_status()
-    return resp.text
+def _fetch_page(url: str, retries: int = 3) -> str:
+    last_exc: Exception | None = None
+    for attempt in range(retries):
+        try:
+            resp = requests.get(url, cookies=PTT_COOKIES, headers=PTT_HEADERS, timeout=15)
+            resp.raise_for_status()
+            return resp.text
+        except requests.RequestException as e:
+            last_exc = e
+            if attempt < retries - 1:
+                import time as _t
+                _t.sleep(1.0 + attempt)
+    raise last_exc  # type: ignore[misc]
 
 
 def _parse_index(html: str, board: str) -> tuple[list[PttArticle], str | None]:

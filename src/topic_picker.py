@@ -7,19 +7,22 @@ from pathlib import Path
 
 import anthropic
 
+from .claude_client import call_with_retry
 from .ptt_scraper import PttArticle, clean_title, fetch_article_content, fetch_hot_articles
 
 logger = logging.getLogger(__name__)
 
 
 def collect_candidates(
-    boards: list[str], top_n_per_board: int, min_push_count: int,
+    boards: list[str], top_n_per_board: int, min_push_count: int, pages_per_board: int = 3,
 ) -> list[PttArticle]:
     """從多個看板抓取熱門文章，合併為候選清單。"""
     candidates: list[PttArticle] = []
     for board in boards:
         print(f"      抓取 PTT/{board} 熱門文章 ...")
-        articles = fetch_hot_articles(board, top_n=top_n_per_board, min_push=min_push_count)
+        articles = fetch_hot_articles(
+            board, top_n=top_n_per_board, min_push=min_push_count, pages=pages_per_board,
+        )
         print(f"        → {len(articles)} 篇符合條件")
         candidates.extend(articles)
     candidates.sort(key=lambda a: a.push_count, reverse=True)
@@ -47,15 +50,11 @@ def pick_topic(
     )
 
     client = anthropic.AnthropicBedrock(aws_region=aws_region)
-    resp = client.messages.create(
-        model=bedrock_model,
-        max_tokens=max_tokens,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_prompt}],
+    text, t_in, t_out = call_with_retry(
+        client, model=bedrock_model, max_tokens=max_tokens,
+        system=system_prompt, user=user_prompt, stream=False,
     )
-    text = "".join(b.text for b in resp.content if b.type == "text").strip()
-    usage = resp.usage
-    print(f"        Token 用量：input={usage.input_tokens}, output={usage.output_tokens}")
+    print(f"        Token 用量：input={t_in}, output={t_out}")
 
     try:
         result = json.loads(text)

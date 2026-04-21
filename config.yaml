@@ -15,8 +15,9 @@ ptt:
   boards:
     - Gossiping
     - HatePolitics
-  top_n_per_board: 20       # 每板取推文數最高的前 N 篇
-  min_push_count: 30        # 至少要有這麼多推才納入候選
+  top_n_per_board: 15       # 每板取推文數最高的前 N 篇
+  min_push_count: 10        # 至少要有這麼多推才納入候選
+  pages_per_board: 5        # 每板往前翻幾頁
 
 # 辯論格式
 debate:
@@ -32,10 +33,10 @@ output:
 
 # giscus 留言設定（建立 repo 後去 https://giscus.app 申請填入）
 giscus:
-  enabled: false
-  repo: ""                  # e.g. "davidliao/ai-debate-arena"
-  repo_id: ""
-  category: "General"
-  category_id: ""
+  enabled: true
+  repo: "r07228019/ai-debate-arena"
+  repo_id: "R_kgDOSHw-NQ"
+  category: "Comments"
+  category_id: "DIC_kwDOSHw-Nc4C7Wgj"
   mapping: "pathname"
   theme: "dark_dimmed"
