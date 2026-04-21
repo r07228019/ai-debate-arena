@@ -54,13 +54,11 @@ def _render_page(title: str, body: str, sidebar_items: list[dict], active_date: 
     sidebar_html = "\n".join(sidebar_html_parts)
 
     template = (_PROJECT_DIR / "template.html").read_text(encoding="utf-8")
-    giscus = _giscus_script(giscus_cfg)
     return (
         template
         .replace("%%TITLE%%", html_lib.escape(title))
         .replace("%%SIDEBAR%%", sidebar_html)
         .replace("%%BODY_HTML%%", body)
-        .replace("%%GISCUS%%", giscus)
     )
 
 
@@ -78,7 +76,7 @@ def _paragraphs_to_html(text: str) -> str:
     return "\n".join(f"<p>{html_lib.escape(p).replace(chr(10), '<br>')}</p>" for p in parts)
 
 
-def _render_debate_body(debate: dict, date_str: str) -> str:
+def _render_debate_body(debate: dict, date_str: str, giscus_cfg: dict) -> str:
     topic = debate["topic"]
     personas = debate["personas"]
     history = debate["history"]
@@ -145,12 +143,15 @@ def _render_debate_body(debate: dict, date_str: str) -> str:
     )
 
     # Comments
+    giscus_content = (
+        _giscus_script(giscus_cfg)
+        if giscus_cfg.get("enabled")
+        else '<div class="comments-placeholder">（尚未啟用留言功能，請於 config.yaml 設定 giscus）</div>'
+    )
     parts.append(
         '<div class="comments">'
         '<div class="comments-heading"><i class="ph ph-chats"></i> 你怎麼看？</div>'
-        '<div id="giscus-container">'
-        '<div class="comments-placeholder">（尚未啟用留言功能，請於 config.yaml 設定 giscus）</div>'
-        '</div>'
+        f'<div id="giscus-container">{giscus_content}</div>'
         '</div>'
     )
 
@@ -213,7 +214,7 @@ def generate_website(data_dir: Path, docs_dir: Path, giscus_cfg: dict, keep_n: i
 
     # 首頁 = 最新一篇辯論 + 側欄導覽
     latest_date, latest_data = debates[0]
-    latest_body = _render_debate_body(latest_data, latest_date)
+    latest_body = _render_debate_body(latest_data, latest_date, giscus_cfg)
     (docs_dir / "index.html").write_text(
         _render_page(
             f"AI Debate Arena — {latest_data['topic']['debate_topic']}",
@@ -224,7 +225,7 @@ def generate_website(data_dir: Path, docs_dir: Path, giscus_cfg: dict, keep_n: i
 
     # 獨立頁面
     for date_str, data in debates:
-        body = _render_debate_body(data, date_str)
+        body = _render_debate_body(data, date_str, giscus_cfg)
         filename = f"debate_{date_str}.html"
         (debates_dir / filename).write_text(
             _render_page(
