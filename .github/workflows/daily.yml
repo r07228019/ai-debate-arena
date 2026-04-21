@@ -2,8 +2,8 @@ name: Daily Debate
 
 on:
   schedule:
-    # 台灣時間每日 07:20（= UTC 前一天 23:20）
-    - cron: '20 23 * * *'
+    # UTC 時間
+    - cron: '0 23 1 * *'
   workflow_dispatch:  # 允許手動觸發
 
 permissions:
