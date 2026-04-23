@@ -3,7 +3,7 @@ name: Daily Debate
 on:
   schedule:
     # UTC 時間
-    - cron: '0 22 * * *'
+    - cron: '0 22 1 * *'
   workflow_dispatch:  # 允許手動觸發
 
 permissions:
